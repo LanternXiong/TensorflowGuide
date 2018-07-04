@@ -44,7 +44,7 @@ def model_inference(input_tensor, regularizer):
     with tf.variable_scope('out_layer'):
         weights = get_weight_variable([HIDDEN_LAYER_NODE[-1], OUTPUT_NODE], regularizer)
         biases = tf.get_variable('biases', [OUTPUT_NODE], initializer=tf.constant_initializer(0.0))
-        layer = tf.nn.relu(tf.matmul(layer, weights) + biases)
+        layer = tf.matmul(layer, weights) + biases
 
     return layer
 

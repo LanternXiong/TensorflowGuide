@@ -1,6 +1,11 @@
 import tensorflow as tf
 
 
+def convert_to_one_hot(index):
+    index_judge = [tf.equal(index, tf.constant(0)), tf.equal(index, tf.constant(1)), tf.equal(index, tf.constant(2))]
+    return tf.where(index_judge, [1, 1, 1], [0, 0, 0])
+
+
 def read_csv_input_data(file_path_list, record_defaults, batch_size=60, num_epochs=None, shuffle=True):
     '''
 
@@ -21,18 +26,19 @@ def read_csv_input_data(file_path_list, record_defaults, batch_size=60, num_epoc
     decode_result = tf.decode_csv(value, record_defaults=record_defaults)
     # get features and labels
     features = decode_result[:-1]
-    label = decode_result[-1:]
+    label = convert_to_one_hot(decode_result[-1])
     # get a batch of data //The `capacity` argument controls the how long the prefetching is allowed to
     #   grow the queues.
-    batch_features, batch_labels = tf.train.shuffle_batch([features, label], batch_size=batch_size, capacity=5000, min_after_dequeue=1000)
+    batch_features, batch_labels = tf.train.shuffle_batch([features, label], batch_size=batch_size, capacity=5000,
+                                                          min_after_dequeue=1000)
     # batch_features, batch_labels = tf.train.batch([features, label], batch_size=batch_size)  # not shuffle
     return batch_features, batch_labels
 
 
 def read_test():
     file_path_list = ['../Data/iris_training.csv']
-    record_defaults = [[0.0], [0.0], [0.0], [0.0], [0.0]]
-    example, label = read_csv_input_data(file_path_list, record_defaults=record_defaults)
+    record_defaults = [[0.0], [0.0], [0.0], [0.0], [0]]
+    example, label = read_csv_input_data(file_path_list, record_defaults=record_defaults, num_epochs=5)
     # Note: if `num_epochs` is not `None` in `string_input_producer`, `string_input_producer` creates local counter
     #   `epochs`. Use `local_variables_initializer()` to initialize local variables.
     local_init_op = tf.local_variables_initializer()
