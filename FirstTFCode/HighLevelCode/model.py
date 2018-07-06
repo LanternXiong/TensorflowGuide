@@ -15,7 +15,7 @@ def premade_model_fn(optimizer='Adagrad', config=None):
     return estimator
 
 
-def my_model(features, labels, mode, params):
+def customized_model(features, labels, mode, params):
     """DNN with three hidden layers, and dropout of 0.1 probability."""
     # Create three fully connected layers each layer having a dropout
     # probability of 0.1.
@@ -35,7 +35,8 @@ def my_model(features, labels, mode, params):
             'probabilities': tf.nn.softmax(logits),
             'logits': logits,
         }
-        return tf.estimator.EstimatorSpec(mode, predictions=predictions)
+        export_outputs = {'prediction': tf.estimator.export.PredictOutput(predictions)}
+        return tf.estimator.EstimatorSpec(mode, predictions=predictions, export_outputs=export_outputs)
 
     # Compute loss.
     loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)

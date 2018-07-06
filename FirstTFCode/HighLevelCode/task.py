@@ -1,6 +1,8 @@
 import os
 
 import tensorflow as tf
+
+import featurizer
 import model
 import input
 import shutil
@@ -8,7 +10,8 @@ import shutil
 
 train_file_name_list = ['../Data/iris_training.csv']
 eval_file_name_list = ['../Data/iris_test.csv']
-model_dir = './model_dir'
+model_checkpoint_dir = './model_checkpoint_dir'
+model_saved_dir = './model_saved_dir'
 num_epoch = 200
 batch_size = 20
 train_steps = 1000
@@ -27,6 +30,15 @@ def train(run_config):
     opt = tf.train.AdagradOptimizer(learning_rate=learning_rate)
 
     estimator = model.premade_model_fn(optimizer=opt, config=run_config)
+    # estimator = tf.estimator.Estimator(
+    #     model_fn=model.customized_model,
+    #     params={
+    #         'feature_columns': list(featurizer.create_feature_columns().values()),
+    #         # Two hidden layers of 10 nodes each.
+    #         'hidden_units': [10, 30],
+    #         # The model must choose between 3 classes.
+    #         'n_classes': 3,
+    #     })
 
     estimator.train(input_fn=train_input_fn, max_steps=train_steps)
 
@@ -34,39 +46,18 @@ def train(run_config):
 
     print('\nTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
 
-    # Generate predictions from the model
-    # expected = ['Setosa', 'Versicolor', 'Virginica']
-    # predict_x = {
-    #     'SepalLength': [5.1, 5.9, 6.9],
-    #     'SepalWidth': [3.3, 3.0, 3.1],
-    #     'PetalLength': [1.7, 4.2, 5.4],
-    #     'PetalWidth': [0.5, 1.5, 2.1],
-    # }
-
-    # predictions = estimator.predict(
-    #     input_fn=lambda: iris_data.eval_input_fn(predict_x,
-    #                                              labels=None,
-    #                                              batch_size=args.batch_size))
-    #
-    # for pred_dict, expec in zip(predictions, expected):
-    #     template = ('\nPrediction is "{}" ({:.1f}%), expected "{}"')
-    #
-    #     class_id = pred_dict['class_ids'][0]
-    #     probability = pred_dict['probabilities'][class_id]
-    #
-    #     print(template.format(iris_data.SPECIES[class_id],
-    #                           100 * probability, expec))
+    estimator.export_savedmodel(model_saved_dir, input.serving_input_fn)
 
 
 def main():
-    if os.path.exists(model_dir):
-        shutil.rmtree(model_dir)
+    if os.path.exists(model_checkpoint_dir):
+        shutil.rmtree(model_checkpoint_dir)
     run_config = tf.estimator.RunConfig(
         tf_random_seed=666,
         log_step_count_steps=4,
-        save_checkpoints_secs=1,  # change frequency of saving checkpoints
+        save_checkpoints_secs=3,  # change frequency of saving checkpoints
         keep_checkpoint_max=3,
-        model_dir=model_dir
+        model_dir=model_checkpoint_dir
     )
 
     train(run_config)
