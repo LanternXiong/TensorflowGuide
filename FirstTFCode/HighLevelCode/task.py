@@ -1,3 +1,5 @@
+import os
+
 import tensorflow as tf
 import model
 import input
@@ -7,10 +9,10 @@ import shutil
 train_file_name_list = ['../Data/iris_training.csv']
 eval_file_name_list = ['../Data/iris_test.csv']
 model_dir = './model_dir'
-num_epoch = 60
+num_epoch = 200
 batch_size = 20
-train_steps = 300
-learning_rate = 0.0001
+train_steps = 1000
+learning_rate = 0.01
 
 
 def train(run_config):
@@ -57,9 +59,10 @@ def train(run_config):
 
 
 def main():
-
+    if os.path.exists(model_dir):
+        shutil.rmtree(model_dir)
     run_config = tf.estimator.RunConfig(
-        # tf_random_seed=19830610,
+        tf_random_seed=666,
         log_step_count_steps=4,
         save_checkpoints_secs=1,  # change frequency of saving checkpoints
         keep_checkpoint_max=3,
@@ -70,5 +73,4 @@ def main():
 
 
 if __name__ == '__main__':
-    shutil.rmtree(model_dir)
     main()
